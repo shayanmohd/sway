@@ -1,0 +1,21 @@
+{
+  "app": "Sway",
+  "org": "SocialSure Private Limited",
+  "site": "https://shayanmohd.github.io/sway/",
+  "email": "shayanm2002@gmail.com",
+  "bg": "#0A1521", "fg": "#EAF0F4", "muted": "#93A6B5", "hair": "#22374E", "accent": "#E8C89A",
+  "bgDark": "#0A1521", "fgDark": "#EAF0F4", "mutedDark": "#93A6B5", "hairDark": "#22374E", "accentDark": "#E8C89A",
+  "fontFamily": "'Atkinson Hyperlegible Next', system-ui, -apple-system, sans-serif",
+  "fontCss": "fonts/fonts.css",
+  "permissions": [
+    ["VIBRATE", "the breathing rhythm itself. Sway's whole method is a vibration you can follow with the phone in a pocket, plus a short tap when you press something"]
+  ],
+  "network": false,
+  "collects": [],
+  "storage": "Your storm log, your trusted contact and your settings are written to this device's private app storage. They are never uploaded, never backed up to us, and never shared. Uninstalling the app deletes them, so Sway can export the whole log as a plain text file at any time, and can erase everything on request from the Shelter screen.",
+  "extra": [
+    ["Phone calls and messages", "The night shelf can hand a number to your phone's dialler: the person you saved, a public crisis line, or your local emergency number. One bundled line is a text service rather than a phone line, and that one opens your messaging app with the message ready instead. Sway does not have permission to place a call or send a message itself. You decide whether to press call or send, and Sway never sees whether you did."],
+    ["Crisis lines", "The crisis line numbers are a small list bundled inside the app and shipped with app updates. Choosing your region only changes which of those bundled numbers is shown. Nothing about your location is measured, requested or sent, and the app has no location permission."],
+    ["Export", "Exporting writes a plain text file into this device's Downloads folder using your own tap. The file leaves the app only if you choose to send it somewhere yourself."]
+  ]
+}

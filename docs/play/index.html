@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Sway</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<main id="stage">
+
+  <!-- ============ CRISIS LAYER ============ -->
+
+  <section class="screen" id="s-session">
+    <canvas id="water" aria-hidden="true"></canvas>
+    <button class="endx" id="endBtn" aria-label="End the session">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5 L19 19 M19 5 L5 19"/></svg>
+    </button>
+    <div class="sess-mid">
+      <p class="hint" id="hint">Breathe with the water. You can close your eyes.</p>
+      <p class="phase" id="phase" aria-live="polite"></p>
+    </div>
+    <div class="sess-foot">
+      <button class="shelfbtn" id="shelfBtn">Night shelf</button>
+      <button class="quietlink" id="calmBtn">I am not in a storm right now</button>
+    </div>
+    <div class="pocket" id="pocketVeil" hidden>
+      <p>Screen dimmed. The rhythm is still running.</p>
+      <p class="sm">Touch anywhere to bring it back.</p>
+    </div>
+  </section>
+
+  <section class="screen pad" id="s-fork" hidden>
+    <div class="mid">
+      <h1 class="ask">Still stormy, or passing?</h1>
+      <div class="forkrow">
+        <button class="big" id="forkStorm">Still stormy</button>
+        <button class="big alt" id="forkPass">Passing</button>
+      </div>
+      <button class="quietlink center" id="forkBack">Back to the rhythm</button>
+    </div>
+  </section>
+
+  <section class="screen pad" id="s-tools" hidden>
+    <div class="mid">
+      <p class="eyebrow">Something else to try</p>
+      <div class="toolstack">
+        <button class="big" data-tool="senses"><b>Name what is here</b><i>5-4-3-2-1, one sense at a time</i></button>
+        <button class="big" data-tool="cold"><b>Something cold</b><i>Wrists and face, thirty seconds</i></button>
+        <button class="big" data-tool="tapping"><b>Left, right, left</b><i>Slow alternating taps in time with the phone</i></button>
+      </div>
+      <button class="quietlink center" id="toolsBack">Back to the rhythm</button>
+    </div>
+  </section>
+
+  <section class="screen pad tappable" id="s-step" hidden>
+    <div class="mid">
+      <p class="big-instruction" id="stepBig"></p>
+      <p class="small-instruction" id="stepSmall"></p>
+    </div>
+    <p class="advance" id="stepAdvance">Tap anywhere when you have</p>
+  </section>
+
+  <section class="screen pad" id="s-tap" hidden>
+    <div class="mid">
+      <div class="bilateral"><span class="dot" id="dotL"></span><span class="dot" id="dotR"></span></div>
+      <p class="big-instruction" id="tapLine"></p>
+      <p class="small-instruction">Your phone has one motor, so it keeps the beat. Your hands do the alternating.</p>
+    </div>
+    <div class="stepfoot"><button class="big alt" id="tapDone">Done</button></div>
+  </section>
+
+  <section class="screen pad" id="s-log" hidden>
+    <div class="mid">
+      <p class="eyebrow">How big was it?</p>
+      <div class="waves" id="waveRow" role="group" aria-label="Wave size"></div>
+      <p class="wavehint" id="waveHint">Tap a wave, or skip. Nothing here is scored.</p>
+      <p class="eyebrow mt">Where were you?</p>
+      <div class="chips" id="chipRow"></div>
+    </div>
+    <div class="stepfoot two">
+      <button class="big alt" id="logSkip">Skip</button>
+      <button class="big" id="logSave">Save</button>
+    </div>
+  </section>
+
+  <section class="screen pad" id="s-closing" hidden>
+    <div class="mid">
+      <p class="closing" id="closingLine">That was hard. You rode it.</p>
+      <p class="closing-sub" id="closingSub"></p>
+    </div>
+    <div class="stepfoot two">
+      <button class="big alt" id="closeAgain">Back to the rhythm</button>
+      <button class="big" id="closeDone">Done</button>
+    </div>
+  </section>
+
+  <!-- ============ CALM LAYER ============ -->
+
+  <section class="screen view" id="v-shelter" hidden>
+    <div class="scroller">
+      <h1 class="h1">Shelter</h1>
+      <p class="lede">This is the calm side of the app. Nothing here is urgent, so it is allowed to take its time.</p>
+
+      <div class="panel">
+        <h2 class="h2">Rehearse the rhythm</h2>
+        <p class="help">Three minutes on an ordinary day. The point is that your body knows the pattern before it needs it.</p>
+        <button class="btn" id="rehearseBtn">Start a rehearsal</button>
+      </div>
+
+      <div class="panel">
+        <h2 class="h2">Your person</h2>
+        <p class="help" id="contactState"></p>
+        <div class="field">
+          <label for="cName">Name</label>
+          <input type="text" id="cName" placeholder="Who you would want to hear" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cPhone">Phone</label>
+          <input type="tel" id="cPhone" placeholder="Number to dial" autocomplete="off">
+        </div>
+        <button class="btn ghost" id="cSave">Save contact</button>
+      </div>
+
+      <div class="panel">
+        <h2 class="h2">Crisis lines</h2>
+        <div class="field">
+          <label for="regionSel">Where you are</label>
+          <select id="regionSel"></select>
+        </div>
+        <p class="help" id="regionPreview"></p>
+      </div>
+
+      <div class="panel">
+        <h2 class="h2">Calibrate the haptics</h2>
+        <p class="help">Vibration motors vary wildly between phones. Set the strength once so the swell is easy to follow without being startling.</p>
+        <div class="field">
+          <label for="strengthRange">Strength</label>
+          <input type="range" id="strengthRange" min="15" max="100" step="5">
+        </div>
+        <div class="btnrow">
+          <button class="btn ghost" id="testSwell">Feel one breath</button>
+          <span class="help" id="ampNote"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="h2">Settings</h2>
+        <div class="field">
+          <label for="protoSel">Rhythm</label>
+          <select id="protoSel">
+            <option value="tide">Tide. Starts quick, slows over three minutes</option>
+            <option value="even">Even. Four counts each, all the way round</option>
+            <option value="long">Long exhale. Four in, seven hold, eight out</option>
+          </select>
+          <p class="help">Tide is the default because holding the breath can make some attacks worse.</p>
+        </div>
+        <div class="field row">
+          <div><label for="hapticsChk">Haptics</label><p class="help">The rhythm you can follow with the phone in a pocket.</p></div>
+          <input type="checkbox" id="hapticsChk">
+        </div>
+        <div class="field row">
+          <div><label for="audioChk">Tide sound</label><p class="help">A low swell under the rhythm, for phones with weak motors.</p></div>
+          <input type="checkbox" id="audioChk">
+        </div>
+        <div class="field row">
+          <div><label for="dimChk">Pocket dim</label><p class="help">Darken the screen after forty five seconds without a touch, so the rhythm can run in a pocket.</p></div>
+          <input type="checkbox" id="dimChk">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="h2">Your log</h2>
+        <p class="help">Everything Sway knows sits on this phone. Take a copy whenever you want one.</p>
+        <div class="btnrow">
+          <button class="btn ghost" id="exportBtn">Export as text</button>
+          <button class="btn ghost danger" id="eraseBtn">Erase everything</button>
+        </div>
+        <p class="help" id="ioNote"></p>
+      </div>
+
+      <p class="colophon">Sway. Made to be used four times a year and trusted every time.<br>
+        A self-help tool, not a medical device or a treatment.</p>
+    </div>
+  </section>
+
+  <section class="screen view" id="v-almanac" hidden>
+    <div class="scroller">
+      <h1 class="h1">Almanac</h1>
+      <p class="lede" id="almHead"></p>
+      <div id="almBody"></div>
+    </div>
+  </section>
+
+  <section class="screen view" id="v-learn" hidden>
+    <div class="scroller">
+      <h1 class="h1">Learn</h1>
+      <p class="lede">Ten short pieces about what a panic attack does to a body, and one about what to do for someone else.</p>
+      <div class="disclaimer">
+        Sway is a self-help wellness tool. It is not a medical device, it does not diagnose anything, and it is
+        not a substitute for care from a doctor or a therapist. If you are in danger, call your local emergency
+        number or one of the lines in the night shelf.
+      </div>
+      <div id="cardList"></div>
+      <div class="panel">
+        <h2 class="h2">Hand this to someone</h2>
+        <p class="help">A full screen card for a bystander, so you do not have to explain any of this out loud.</p>
+        <button class="btn ghost" id="learnBystander">Open the card</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav id="tabs" hidden>
+  <button class="tab is-on" data-view="shelter">Shelter</button>
+  <button class="tab" data-view="almanac">Almanac</button>
+  <button class="tab" data-view="learn">Learn</button>
+</nav>
+
+<!-- ============ OVERLAYS ============ -->
+
+<div class="sheet" id="shelf" hidden>
+  <div class="sheet-panel">
+    <p class="sheet-title">Night shelf</p>
+    <button class="shelf-item" id="shelfContact"><b id="shelfContactName">Your person</b><i id="shelfContactSub"></i></button>
+    <div id="shelfLines"></div>
+    <button class="shelf-item" id="shelfCard"><b>Hand this to someone</b><i>A card that explains it for you</i></button>
+    <p class="shelf-note" id="shelfNote"></p>
+    <button class="btn ghost wide" id="shelfClose">Close</button>
+  </div>
+</div>
+
+<section class="screen bystander" id="s-bystander" hidden>
+  <div class="bys-scroll">
+    <p class="bys-lead" id="bysLead"></p>
+    <ul class="bys-list" id="bysList"></ul>
+    <p class="bys-name" id="bysName"></p>
+  </div>
+  <div class="stepfoot"><button class="big alt" id="bysClose">Close</button></div>
+</section>
+
+<div class="sheet" id="reader" hidden>
+  <div class="sheet-panel tall">
+    <h2 class="h2" id="readerTitle"></h2>
+    <div id="readerBody"></div>
+    <button class="btn ghost wide" id="readerClose">Close</button>
+  </div>
+</div>
+
+<p id="toast" class="toast" hidden></p>
+
+<script src="js/store.js"></script>
+<script src="js/content.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

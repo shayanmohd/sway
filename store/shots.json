@@ -1,0 +1,42 @@
+{
+  "url": "http://127.0.0.1:8731/index.html",
+  "out": "/Users/sherry/Documents/DEVPROJECTS/sway/store/screenshots",
+  "width": 540,
+  "height": 960,
+  "dpr": 2,
+  "wait": 1200,
+  "colorScheme": "dark",
+  "seed": "(() => { const K='sway.v1'; if (localStorage.getItem(K)) return;\n const day=86400000, now=Date.now();\n const spec=[[36,3,8,['transit'],['breathing'],441],[32,4,18,['work','transit'],['breathing','senses'],498],\n   [29,2,23,['night','home'],['breathing'],372],[24,5,7,['transit'],['breathing','cold'],455],\n   [19,3,8,['transit'],['breathing','senses'],348],[15,4,2,['night'],['breathing','tapping'],311],\n   [11,3,17,['work'],['breathing'],268],[7,2,8,['transit'],['breathing'],236],\n   [4,3,21,['social'],['breathing','senses'],205],[1,2,7,['transit'],['breathing','cold'],182]];\n const storms=spec.map((s,i)=>{const d=new Date(now-s[0]*day); d.setHours(s[2], 7+i*3, 0, 0);\n   return {id:'seed'+i, at:d.getTime(), endedAt:d.getTime()+s[5]*1000, wave:s[1], chips:s[3],\n           tools:s[4], durS:s[5], launchMs:62+i*4, pocket:i%3===0, logged:true};});\n localStorage.setItem(K, JSON.stringify({storms, pulses:[71,64,83,68,77,59,74,66,80,62],\n  settings:{protocol:'tide', strength:0.72, haptics:true, audio:false, pocketDim:false,\n    contact:{name:'Priya', phone:'+44 7700 900123', rel:''}, region:'uk', calibrated:true},\n  learnSeen:['chest','air'], firstRun: now-37*day}));\n})()",
+  "shots": [
+    {
+      "name": "01-session",
+      "waitMs": 1100,
+      "before": "(async()=>{const w=ms=>new Promise(r=>setTimeout(r,ms)); document.getElementById('hint').classList.add('gone'); const p=document.getElementById('phase'); p.classList.add('on'); p.textContent='Breathe out, slowly'; Engine.level=()=>0.66; await w(500);})()"
+    },
+    {
+      "name": "02-fork",
+      "waitMs": 600,
+      "before": "document.getElementById('endBtn').click()"
+    },
+    {
+      "name": "03-grounding",
+      "waitMs": 600,
+      "before": "(async()=>{const w=ms=>new Promise(r=>setTimeout(r,ms)); document.getElementById('forkStorm').click(); await w(140); document.querySelector('[data-tool=\"senses\"]').click(); await w(140); const s=document.getElementById('s-step'); s.click(); await w(80); s.click(); await w(120);})()"
+    },
+    {
+      "name": "04-log",
+      "waitMs": 600,
+      "before": "(async()=>{const w=ms=>new Promise(r=>setTimeout(r,ms)); App.openLog(); await w(160); document.querySelectorAll('#waveRow .wavebtn')[3].click(); await w(90); const c=document.querySelectorAll('#chipRow .chip'); c[1].click(); await w(70); c[3].click(); await w(120);})()"
+    },
+    {
+      "name": "05-almanac",
+      "waitMs": 800,
+      "before": "App.setView('almanac')"
+    },
+    {
+      "name": "06-bystander",
+      "waitMs": 700,
+      "before": "(async()=>{const w=ms=>new Promise(r=>setTimeout(r,ms)); App.openBystander(); await w(220);})()"
+    }
+  ]
+}
