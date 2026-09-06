@@ -275,7 +275,10 @@ const Water = (() => {
     shown += (target - shown) * 0.2;
     Engine.audioFollow(shown);
 
-    const ph = (now - t0) / 1000;
+    // Reduced motion stops the wave TRAVELLING; it must not flatten it. Zeroing the amplitude, which is
+    // what this used to do, turned the breath and the water into two straight bars on any device with
+    // animations switched off, and that wave is the whole app.
+    const ph = reduce ? 0 : (now - t0) / 1000;
     const deep = css('--water', '#1A3C63');
     const abyss = css('--water-deep', '#081527');
     const warm = css('--accent', '#F2B45C');
@@ -285,14 +288,14 @@ const Water = (() => {
 
     // The breath: it gathers high on the inhale and settles onto the water on the exhale.
     const warmBase = h * 0.645 - (h * 0.352) * shown;
-    const warmAmp = reduce ? 0 : 9 + 15 * shown;
+    const warmAmp = 9 + 15 * shown;
     const yWarm = x => warmBase
       + warmAmp * Math.sin((x / w) * Math.PI * 2 + ph * 0.42)
       + warmAmp * 0.28 * Math.sin((x / w) * Math.PI * 3.6 - ph * 0.29);
 
     // The water: the same gesture, slower and smaller, a beat behind.
     const seaBase = h * 0.775 - (h * 0.065) * shown;
-    const seaAmp = reduce ? 0 : 4.5 + 4.5 * shown;
+    const seaAmp = 4.5 + 4.5 * shown;
     const ySea = x => seaBase
       + seaAmp * Math.sin((x / w) * Math.PI * 2 + ph * 0.42 + 0.95)
       + seaAmp * 0.5 * Math.sin((x / w) * Math.PI * 3.1 - ph * 0.23);
