@@ -629,7 +629,10 @@ const App = (() => {
       default: return false;
     }
   }
-  function onPause() { if (screen === 'session') Engine.pause(); else Engine.tapStop(); }
+  function onPause() {
+    if (screen === 'session') { Engine.pause(); Water.halt(); }   // the animation frame is a timer too
+    else Engine.tapStop();
+  }
   function onResume() {
     if (screen === 'session' && Engine.isRunning()) { Engine.resume(); Water.play(); Engine.audioResume(); }
     else if (screen === 'tap') resumeTapping();

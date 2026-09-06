@@ -10,7 +10,7 @@ Sway: Panic First Aid
 ## Short description (75 / 80)
 One tap to slow breathing you can feel. Offline, private, no account. Ever.
 
-## Full description (3989 / 4000)
+## Full description (3994 / 4000)
 When a panic attack starts, a splash screen is a locked door. So is a login, a mood check in, and the question "what would you like to do today?"
 
 Sway is built for exactly one moment: the bad one. Tap the icon and your phone is already pulsing a slow breathing rhythm against your palm. No account. No network. No menu.
@@ -23,7 +23,7 @@ Other breathing apps put a circle on a screen. Sway puts the rhythm in the vibra
 
 A gathering swell for the in breath, so you rise with the wave. Stillness for the hold, which starts at zero seconds because holding your breath can make an attack worse. A long train of pulses that fade and spread apart for the out breath, which is always the longer half.
 
-You can follow it lying in the dark, in a meeting, or with the phone still in your pocket. Nobody has to see you doing it. If you do look, the screen shows one thing: a warm wave of light over cool water, rising as you breathe in and settling as you breathe out. No numbers, and no text at all for the first minute.
+You can follow it lying in the dark, in a meeting, or with the phone still in your pocket. Nobody has to see you doing it. If you do look, the screen shows one thing: a warm wave of light over cool water, rising as you breathe in and settling as you breathe out. Apart from one line at the start and two buttons, no words appear for a minute.
 
 Sessions start a little quicker than comfortable, to meet a racing breath where it is, then decelerate over three minutes. Calibrate the strength once, because motors vary wildly, and switch on a low tide sound if your phone's motor is weak.
 
@@ -35,7 +35,7 @@ Still stormy leads into grounding: the 5-4-3-2-1 senses walkthrough one instruct
 Passing leads to the storm log: two taps, both optional, and a closing card that does not congratulate you.
 
 PATTERNS, GENTLY
-Months later the Almanac says plain things. Six of ten storms began with transit marked. Most arrive in the morning. Your earlier storms averaged seven minutes, your recent ones four. Storms, not failures. No streaks, no flame counters, no mood scores. There is no number in this app you can fail.
+Months later the Almanac says plain things. Six of ten storms began with transit marked. Most arrive in the morning. Your earlier storms averaged seven minutes, your recent ones four. No streaks, no flame counters, no mood scores. There is no number in this app you can fail.
 
 FOR THE WORST NIGHTS
 One tap from the session screen opens the night shelf: your person, one tap to the dialler at 3am. A crisis line for where you are, bundled in the app, with the month it was last checked printed underneath. Your local emergency number. And a card you can hand to someone, in large type, explaining what is happening and what to do, so you do not have to explain it while it is happening.

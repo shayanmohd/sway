@@ -60,11 +60,18 @@ const Store = (() => {
   }
 
   /* ---------- storms ---------- */
+  /** Ids key every later patch, so two storms opened inside the same millisecond must not share one. */
+  let lastId = 0;
+  function nextId() {
+    const t = Math.max(Date.now(), lastId + 1);
+    lastId = t;
+    return 's' + t.toString(36);
+  }
   function openStorm() {
     // An app that opens straight into a session collects abandoned ones; sweep them.
     const cut = Date.now() - 86400000;
     db.storms = db.storms.filter(s => s.logged || s.at > cut);
-    const s = { id: 's' + Date.now().toString(36), at: Date.now(), endedAt: null,
+    const s = { id: nextId(), at: Date.now(), endedAt: null,
                 wave: null, chips: [], tools: [], durS: 0, launchMs: null, pocket: false, logged: false };
     db.storms.push(s);
     if (!db.firstRun) db.firstRun = Date.now();

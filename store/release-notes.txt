@@ -1,3 +1,3 @@
 A new look, drawn from the icon. The breathing screen is now a warm wave riding over cool water, lit and moving with your breath, and the same language runs through the shelter, the almanac and the night shelf.
 
-Fixed: switching haptics off now silences every buzz, not only the rhythm. Back leaves a rehearsal or the closing card instead of closing the app. The alternating taps and the tide sound return when you come back.
+Fixed: switching haptics off now silences every buzz, not only the rhythm. Back leaves a rehearsal or the closing card instead of closing the app. The alternating taps and the tide sound return when you come back, and the sound lets go of the speaker when you leave.

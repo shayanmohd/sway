@@ -99,15 +99,18 @@ const Engine = (() => {
     clearTimeout(sleepTimer);
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   }
+  /** True only while the tide should actually be sounding: wanted by the setting, in a session, and
+      that session not paused. `running` alone stays true across a pause, which is not the same thing. */
+  const audioWanted = () => !!(Store.settings().audio && running && cycleTimer);
   /** Fade out, then hand the audio hardware back: a silent context left running costs battery all
-      night on a phone that was opened once at 3am. */
-  function audioStop() {
+      night on a phone that was opened once at 3am. Leaving the app releases it at once, because a
+      backgrounded WebView freezes its timers and a deferred release would never arrive. */
+  function audioStop(immediate) {
     if (!ctx) return;
-    try { gain.gain.setTargetAtTime(0, ctx.currentTime, 0.15); } catch (e) {}
+    try { gain.gain.setTargetAtTime(0, ctx.currentTime, immediate ? 0.04 : 0.15); } catch (e) {}
     clearTimeout(sleepTimer);
-    sleepTimer = setTimeout(() => {
-      if (ctx && !running && ctx.state === 'running') ctx.suspend().catch(() => {});
-    }, 900);
+    const release = () => { if (ctx && !audioWanted() && ctx.state === 'running') ctx.suspend().catch(() => {}); };
+    if (immediate) release(); else sleepTimer = setTimeout(release, 900);
   }
   const audioState = () => (ctx ? ctx.state : 'none');
   function audioFollow(level) {
@@ -154,7 +157,7 @@ const Engine = (() => {
     try { if (N && N.keepAwake) N.keepAwake(false); } catch (e) {}
   }
 
-  function pause() { clearTimeout(cycleTimer); cycleTimer = null; clearHaptics(); audioStop(); }
+  function pause() { clearTimeout(cycleTimer); cycleTimer = null; clearHaptics(); audioStop(true); }
   function resume() { if (running && !cycleTimer) { cycle(); audioResume(); } }
 
   function level(now) {
