@@ -27,6 +27,14 @@ const App = (() => {
   }
   function tap(v) { try { Engine.buzz(v == null ? 0.45 : v, 26); } catch (e) {} }
 
+  /** Every icon in the app comes out of the one symbol sheet, so the stroke language cannot drift. */
+  const icon = id => '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-' + id + '"/></svg>';
+  /** Lists arrive rather than appear: each child is given its place in the stagger. */
+  function stagger(el) {
+    el.classList.add('stagger');
+    Array.from(el.children).forEach((c, i) => c.style.setProperty('--i', Math.min(i, 9)));
+  }
+
   function download(name, mime, text) {
     if (N && N.saveFile) {
       try {
@@ -75,11 +83,15 @@ const App = (() => {
     if (v === 'shelter') renderShelter();
     if (v === 'learn') renderLearn();
     go('calm');
+    const sc = $('#v-' + v + ' .scroller');
+    if (sc) { sc.scrollTop = 0; sc.classList.remove('viewin'); void sc.offsetWidth; sc.classList.add('viewin'); }
   }
 
   /* ---------- the session ---------- */
   function startSession(opts) {
     opts = opts || {};
+    // A second tap on a button that starts a session must not open a second storm record.
+    if (Engine.isRunning() && screen === 'session' && !opts.resume && !!opts.rehearse === rehearsing) return;
     rehearsing = !!opts.rehearse;
     if (!opts.resume) {
       sessionStart = Date.now();
@@ -133,6 +145,12 @@ const App = (() => {
     setView('shelter');
     toast('Rehearsal done. Your body knows the shape a little better.');
   }
+  /** A rehearsal is entered from the Shelter, so it is a nested screen: Back leaves it quietly. */
+  function cancelRehearsal() {
+    stopSessionClock();
+    rehearsing = false;
+    setView('shelter');
+  }
   function abandonSession() {
     stopSessionClock();
     if (stormId) { Store.discard(stormId); stormId = null; }
@@ -147,7 +165,7 @@ const App = (() => {
     dimTimer = setTimeout(() => {
       if (Store.settings().pocketDim && screen === 'session' && Engine.isRunning()) {
         $('#pocketVeil').hidden = false;
-        if (stormId) Store.patch(stormId, { pocket: true });
+        if (stormId && !rehearsing) Store.patch(stormId, { pocket: true });
       }
     }, 45000);
   }
@@ -159,6 +177,9 @@ const App = (() => {
     if (stormId) Store.addTool(stormId, tool);
     if (tool === 'tapping') {
       go('tap');
+      $('#tapHow').textContent = Store.settings().haptics
+        ? 'Your phone has one motor, so it keeps the beat. Your hands do the alternating.'
+        : 'Haptics are switched off, so the two lights keep the beat instead. Your hands do the alternating.';
       let i = 0;
       $('#tapLine').textContent = Content.TAPPING[0];
       clearInterval(tapLineTimer);
@@ -166,10 +187,7 @@ const App = (() => {
         i = (i + 1) % Content.TAPPING.length;
         $('#tapLine').textContent = Content.TAPPING[i];
       }, 9000);
-      Engine.tapStart(side => {
-        $('#dotL').classList.toggle('lit', side === 0);
-        $('#dotR').classList.toggle('lit', side === 1);
-      });
+      resumeTapping();
       return;
     }
     stepList = tool === 'senses' ? Content.SENSES : Content.COLD;
@@ -189,6 +207,13 @@ const App = (() => {
     go('fork');
   }
   function stopTool() { Engine.tapStop(); clearInterval(tapLineTimer); }
+  /** The beat is what the screen is for, so returning to the app has to restart it. */
+  function resumeTapping() {
+    Engine.tapStart(side => {
+      $('#dotL').classList.toggle('lit', side === 0);
+      $('#dotR').classList.toggle('lit', side === 1);
+    });
+  }
 
   /* ---------- the log ---------- */
   function openLog() {
@@ -250,24 +275,29 @@ const App = (() => {
   function openShelf() {
     const st = Store.settings();
     const c = st.contact;
-    $('#shelfContactName').textContent = c.name ? 'Call ' + c.name : 'Your person is not set';
-    $('#shelfContactSub').textContent = c.phone ? c.phone : 'Add one on the Shelter screen so it is one tap next time';
-    $('#shelfContact').disabled = !c.phone;
+    const dialable = cleanNumber(c.phone);
+    $('#shelfContactName').textContent = dialable ? 'Call ' + (c.name || 'your person') : 'Your person is not set';
+    $('#shelfContactSub').textContent = dialable
+      ? c.phone
+      : c.phone ? 'The saved number has no digits in it. Fix it on the Shelter screen.'
+                : 'Add one on the Shelter screen so it is one tap next time';
+    $('#shelfContact').disabled = !dialable;
 
     const r = Content.region(st.region || 'other');
     const box = $('#shelfLines');
     box.innerHTML = '';
-    const add = (title, sub, number, smsBody) => {
+    const add = (title, sub, number, smsBody, glyph) => {
       const b = document.createElement('button');
       b.className = 'shelf-item';
-      b.innerHTML = '<b></b><i></i>';
+      b.innerHTML = icon(glyph) + '<span><b></b><i></i></span>';
       b.querySelector('b').textContent = title;
       b.querySelector('i').textContent = sub;
       b.addEventListener('click', () => smsBody ? sendText(number, smsBody) : dial(number));
       box.appendChild(b);
     };
-    r.lines.forEach(l => add(l.name + ' ' + (l.disp || l.number), l.hours, l.number, l.sms));
-    add('Emergency services ' + r.emergency, 'If this is more than panic, or you are not safe', r.emergency);
+    r.lines.forEach(l => add(l.name + ' ' + (l.disp || l.number), l.hours, l.number, l.sms, l.sms ? 'text' : 'call'));
+    add('Emergency services ' + r.emergency, 'If this is more than panic, or you are not safe', r.emergency, null, 'ring');
+    stagger(box.parentElement);
     $('#shelfNote').textContent = r.lines.length
       ? 'Lines for ' + r.label + ', checked ' + Content.LINES_CHECKED + '. Numbers do change. Set your region on ' +
         'the Shelter screen, and keep your own person saved as well.'
@@ -293,11 +323,18 @@ const App = (() => {
   /* ---------- shelter ---------- */
   function renderShelter() {
     const s = Store.settings();
+    const sc = $('#v-shelter .scroller');
+    if (!sc.dataset.staggered) { stagger(sc); sc.dataset.staggered = '1'; }
     $('#cName').value = s.contact.name;
     $('#cPhone').value = s.contact.phone;
-    $('#contactState').textContent = s.contact.phone
-      ? 'One tap from the night shelf reaches ' + (s.contact.name || 'them') + '.'
-      : 'One person you would want on the phone at 3am. The number stays on this device and is only ever dialled by you.';
+    const st = $('#contactState');
+    const dialable = cleanNumber(s.contact.phone);
+    st.classList.toggle('err', !!s.contact.phone && !dialable);
+    st.textContent = !s.contact.phone
+      ? 'One person you would want on the phone at 3am. The number stays on this device and is only ever dialled by you.'
+      : !dialable
+        ? 'That number has no digits in it, so nothing would be dialled. Add the digits and save again.'
+        : 'One tap from the night shelf reaches ' + (s.contact.name || 'them') + '.';
 
     const sel = $('#regionSel');
     if (!sel.options.length) {
@@ -325,11 +362,60 @@ const App = (() => {
         ? 'This phone can vary vibration strength, so the swell will be a real ramp.'
         : 'This phone vibrates at one fixed strength, so the swell is carried by pulse length instead.'; } catch (e) {}
     }
-    $('#ampNote').textContent = amps;
+    // Nothing here can do anything while the motor is switched off, so it says so and steps aside.
+    $('#strengthRange').disabled = !s.haptics;
+    $('#testSwell').disabled = !s.haptics;
+    $('#calibPanel').classList.toggle('off', !s.haptics);
+    $('#ampNote').textContent = s.haptics ? amps : 'Haptics are switched off in Settings below, so nothing will vibrate.';
     if (!eraseArmed) $('#eraseBtn').textContent = 'Erase everything';
   }
 
   /* ---------- almanac ---------- */
+  /* A month of nights with nothing written on it yet: the same warm breath over the same cool
+     water as the session screen, and the marks along the bottom waiting to be filled in. */
+  const EMPTY_ART =
+    '<svg class="emptyart" viewBox="0 0 320 148" role="img" aria-label="An almanac page with nothing ' +
+    'written on it yet: a warm breath over calm water under stars, and month marks waiting below.">' +
+    '<defs>' +
+    '<linearGradient id="ea-sea" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#1A3C63"/><stop offset="1" stop-color="#0B1B31"/></linearGradient>' +
+    '<linearGradient id="ea-edge" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#6FB2CE" stop-opacity=".2"/>' +
+    '<stop offset=".5" stop-color="#8FD0E6" stop-opacity="1"/>' +
+    '<stop offset="1" stop-color="#6FB2CE" stop-opacity=".2"/></linearGradient>' +
+    '<linearGradient id="ea-warm" x1="0" y1="0" x2="1" y2="0">' +
+    '<stop offset="0" stop-color="#F2B45C" stop-opacity=".25"/>' +
+    '<stop offset=".5" stop-color="#FFD08A" stop-opacity="1"/>' +
+    '<stop offset="1" stop-color="#F2B45C" stop-opacity=".25"/></linearGradient>' +
+    '<radialGradient id="ea-halo" cx=".5" cy=".5" r=".5">' +
+    '<stop offset="0" stop-color="#FFD08A" stop-opacity=".30"/>' +
+    '<stop offset=".45" stop-color="#F0A44A" stop-opacity=".08"/>' +
+    '<stop offset="1" stop-color="#E28430" stop-opacity="0"/></radialGradient>' +
+    '<linearGradient id="ea-sheen" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#FFCD82" stop-opacity=".18"/>' +
+    '<stop offset="1" stop-color="#FFCD82" stop-opacity="0"/></linearGradient>' +
+    '<clipPath id="ea-clip"><path d="M0 78c40-9 78-9 118 0s126 9 202 0v70H0z"/></clipPath>' +
+    '</defs>' +
+    '<g fill="#FFF3D9">' +
+    '<circle cx="44" cy="17" r="1.3" opacity=".6"/><circle cx="118" cy="11" r="1" opacity=".42"/>' +
+    '<circle cx="196" cy="20" r="1.5" opacity=".62"/><circle cx="262" cy="13" r="1" opacity=".4"/>' +
+    '<circle cx="292" cy="29" r="1.1" opacity=".32"/><circle cx="82" cy="31" r=".9" opacity=".32"/>' +
+    '<circle cx="150" cy="34" r=".9" opacity=".26"/><circle cx="228" cy="30" r="1.1" opacity=".3"/></g>' +
+    '<ellipse cx="160" cy="50" rx="150" ry="46" fill="url(#ea-halo)"/>' +
+    '<path d="M0 78c40-9 78-9 118 0s126 9 202 0v70H0z" fill="url(#ea-sea)"/>' +
+    '<g clip-path="url(#ea-clip)"><rect x="0" y="74" width="320" height="34" fill="url(#ea-sheen)"/></g>' +
+    '<path d="M0 78c40-9 78-9 118 0s126 9 202 0" fill="none" stroke="url(#ea-edge)" stroke-width="2.6"/>' +
+    '<g fill="none" stroke-linecap="round">' +
+    '<path d="M0 52c38-16 78-16 118 0s126 16 202 0" stroke="url(#ea-warm)" stroke-width="9" opacity=".2"/>' +
+    '<path d="M0 52c38-16 78-16 118 0s126 16 202 0" stroke="url(#ea-warm)" stroke-width="4"/>' +
+    '<path d="M0 50.6c38-16 78-16 118 0s126 16 202 0" stroke="#FFF3DC" stroke-width="1" opacity=".38"/></g>' +
+    '<g stroke="#3C5C82" stroke-width="1.6" stroke-linecap="round">' +
+    '<path d="M14 132h292"/><path d="M56 132v7"/><path d="M104 132v7"/><path d="M152 132v7"/>' +
+    '<path d="M200 132v7"/><path d="M248 132v7"/></g>' +
+    '<g fill="none" stroke="#5A80AC" stroke-width="1.5" stroke-dasharray="2.4 3.8">' +
+    '<circle cx="104" cy="123" r="5.4"/><circle cx="152" cy="123" r="5.4"/><circle cx="200" cy="123" r="5.4"/></g>' +
+    '</svg>';
+
   function bar(k, n, max) {
     const pct = max ? Math.round(100 * n / max) : 0;
     return '<div class="barrow"><span class="k">' + esc(k) + '</span>' +
@@ -346,8 +432,10 @@ const App = (() => {
       : 'Nothing saved yet. When you log a storm, its shape turns up here.';
     const el = $('#almBody');
     if (!a.n) {
-      el.innerHTML = '<div class="panel"><p class="empty">This screen fills itself in over months, not days. ' +
+      el.innerHTML = '<div class="panel">' + EMPTY_ART +
+        '<p class="empty">This screen fills itself in over months, not days. ' +
         'It counts storms, not streaks, and there is no number here you can fail.</p></div>';
+      stagger(el);
       return;
     }
     let h = '';
@@ -357,19 +445,19 @@ const App = (() => {
     h += '</div>';
 
     const bmax = Math.max.apply(null, a.bands.map(b => b.count));
-    h += '<div class="panel"><h2 class="h2">When they arrive</h2>' +
+    h += '<div class="panel"><h2 class="h2">' + icon('clock') + 'When they arrive</h2>' +
          a.bands.map(b => bar(b.label, b.count, bmax)).join('') + '</div>';
 
     if (a.chips.length) {
       const cmax = a.chips[0].count;
-      h += '<div class="panel"><h2 class="h2">Where you were</h2>' +
+      h += '<div class="panel"><h2 class="h2">' + icon('place') + 'Where you were</h2>' +
            a.chips.map(c => bar(c.label, c.count, cmax)).join('') + '</div>';
     }
 
     if (a.trend.length >= 2) {
       const tmax = Math.max.apply(null, a.trend);
       const cut = Math.max(1, a.trend.length - Math.ceil(a.trend.length / 2));
-      h += '<div class="panel"><h2 class="h2">How long you ride them out</h2><div class="spark">' +
+      h += '<div class="panel"><h2 class="h2">' + icon('almanac') + 'How long you ride them out</h2><div class="spark">' +
            a.trend.map((d, i) => '<i class="' + (i >= cut ? 'recent' : '') + '" style="height:' +
              Math.max(4, Math.round(100 * d / tmax)) + '%"></i>').join('') + '</div>';
       if (a.avgFirst && a.avgRecent) {
@@ -385,7 +473,7 @@ const App = (() => {
 
     const p = Store.pulseStats();
     if (p) {
-      h += '<div class="panel"><h2 class="h2">Receipts</h2>' +
+      h += '<div class="panel"><h2 class="h2">' + icon('pulse') + 'Receipts</h2>' +
            '<p class="help">Sway promises the rhythm arrives fast. Here is what it actually did on this phone, ' +
            'measured from the app screen opening to the first pulse.</p>' +
            bar('Typical', p.median, p.worst) + bar('Slowest', p.worst, p.worst) +
@@ -393,7 +481,7 @@ const App = (() => {
     }
 
     const recent = Store.logged().slice(-8).reverse();
-    h += '<div class="panel"><h2 class="h2">Recent</h2>' + recent.map(s =>
+    h += '<div class="panel"><h2 class="h2">' + icon('card') + 'Recent</h2>' + recent.map(s =>
       '<div class="logrow"><div><div class="d">' + esc(Store.dayLabel(s.at)) + ', ' + Store.clock(s.at) + '</div>' +
       '<div class="m">' + (s.durS ? esc(Store.mmss(s.durS)) : 'not timed') +
       (s.chips.length ? ' &middot; ' + esc(s.chips.map(Store.chipLabel).join(', ')) : '') +
@@ -402,6 +490,7 @@ const App = (() => {
       '<p class="help">Export or erase all of this from the Shelter screen.</p></div>';
 
     el.innerHTML = h;
+    stagger(el);
   }
 
   /* ---------- learn ---------- */
@@ -410,13 +499,17 @@ const App = (() => {
     list.innerHTML = '';
     Content.CARDS.forEach(c => {
       const b = document.createElement('button');
-      b.className = 'cardbtn' + (Store.learnSeen(c.id) ? ' read' : '');
-      b.innerHTML = '<b></b><i></i>';
+      const read = Store.learnSeen(c.id);
+      b.className = 'cardbtn' + (read ? ' read' : '');
+      b.innerHTML = '<span><b></b><i></i></span>' +
+        '<svg class="tick" viewBox="0 0 24 24" aria-hidden="true"><use href="#g-' + (read ? 'check' : 'chev') + '"/></svg>';
       b.querySelector('b').textContent = c.title;
       b.querySelector('i').textContent = c.body[0].slice(0, 74).replace(/\s+\S*$/, '') + '...';
+      if (read) b.setAttribute('aria-label', c.title + ', read');
       b.addEventListener('click', () => openCard(c));
       list.appendChild(b);
     });
+    stagger(list);
   }
   function openCard(c) {
     $('#readerTitle').textContent = c.title;
@@ -492,7 +585,7 @@ const App = (() => {
       toast('That is one inhale at this strength.');
     });
     $('#protoSel').addEventListener('change', e => Store.setSetting('protocol', e.target.value));
-    $('#hapticsChk').addEventListener('change', e => Store.setSetting('haptics', e.target.checked));
+    $('#hapticsChk').addEventListener('change', e => { Store.setSetting('haptics', e.target.checked); renderShelter(); });
     $('#audioChk').addEventListener('change', e => {
       Store.setSetting('audio', e.target.checked);
       if (e.target.checked) Engine.audioResume(); else Engine.audioStop();
@@ -530,12 +623,17 @@ const App = (() => {
       case 'tools': go('fork'); return true;
       case 'log': go('fork'); return true;
       case 'fork': startSession({ resume: true }); return true;
+      case 'closing': stormId = null; setView('shelter'); return true;
       case 'calm': if (view !== 'shelter') { setView('shelter'); return true; } return false;
+      case 'session': if (rehearsing) { cancelRehearsal(); return true; } return false;
       default: return false;
     }
   }
   function onPause() { if (screen === 'session') Engine.pause(); else Engine.tapStop(); }
-  function onResume() { if (screen === 'session' && Engine.isRunning()) { Engine.resume(); Water.play(); } }
+  function onResume() {
+    if (screen === 'session' && Engine.isRunning()) { Engine.resume(); Water.play(); Engine.audioResume(); }
+    else if (screen === 'tap') resumeTapping();
+  }
 
   /* ---------- go ---------- */
   function init() {

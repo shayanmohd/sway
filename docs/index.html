@@ -13,26 +13,36 @@
 <style>
   :root {
     color-scheme: dark;
-    --bg: #0A1521; --surface: #101E2C; --surface-2: #16283B;
-    --fg: #EAF0F4; --muted: #93A6B5; --hair: #22374E; --accent: #E8C89A; --accent-ink: #0A1521;
+    --bg: #0B1526; --surface: #12203A; --surface-hi: #182B4A; --surface-2: #1B2F4E;
+    --fg: #EEF3F8; --muted: #9BB0C4; --hair: #26405F; --accent: #F2B45C; --accent-ink: #0B1526;
+    --cool: #6FB2CE;
     --font: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font);
-         font-size: 18px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  body { margin: 0; color: var(--fg); font-family: var(--font);
+         font-size: 18px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+         font-variant-numeric: tabular-nums;
+         background:
+           radial-gradient(90% 40% at 50% 0%, rgba(242, 180, 92, .07), rgba(242, 180, 92, 0) 62%),
+           linear-gradient(180deg, #14243F 0%, var(--bg) 44%, #081527 100%);
+         background-attachment: fixed; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
   a { color: var(--accent); }
-  img.shot { width: 100%; height: auto; display: block; border: 1px solid var(--hair); border-radius: 14px; }
+  img.shot { width: 100%; height: auto; display: block; border: 1px solid var(--hair); border-radius: 18px;
+             box-shadow: 0 30px 60px -34px rgba(2, 8, 18, 1); }
 
-  .cta { display: inline-block; background: var(--accent); color: var(--accent-ink); text-decoration: none;
-         padding: 15px 28px; border-radius: 14px; font-size: 17px; border: 1px solid var(--accent);
+  .cta { display: inline-block; text-decoration: none; color: var(--accent-ink);
+         background: linear-gradient(180deg, #F7C778, var(--accent));
+         padding: 15px 28px; border-radius: 14px; font-size: 17px; font-weight: 500;
+         border: 1px solid rgba(255, 226, 175, .5);
+         box-shadow: 0 16px 30px -22px rgba(242, 180, 92, .8), inset 0 1px 0 rgba(255, 244, 224, .5);
          transition: transform .15s ease; }
   .cta:active { transform: translateY(1px); }
 
   nav { display: flex; align-items: center; justify-content: space-between; height: 78px; }
   .mark { display: flex; align-items: center; gap: 12px; font-size: 18px; }
-  .mark svg { width: 30px; height: 16px; display: block; }
+  .mark svg { width: 46px; height: 24px; display: block; }
   nav a { color: var(--muted); text-decoration: none; font-size: 15px; margin-left: 22px; }
   nav a:hover { color: var(--fg); }
 
@@ -87,7 +97,8 @@
   /* 7. close */
   .close { text-align: center; padding: 96px 0 40px; }
   .close p.line { font-size: clamp(24px, 3vw, 32px); max-width: 24ch; margin: 0 auto 34px; letter-spacing: -0.02em; }
-  .note { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0;
+  .note { background: linear-gradient(180deg, var(--surface-hi), var(--surface));
+          border-left: 3px solid var(--accent); border-radius: 0 12px 12px 0;
           padding: 22px 24px; font-size: 16px; color: var(--muted); max-width: 56ch; margin: 60px auto 0; text-align: left; }
   .note b { color: var(--fg); font-weight: 700; }
 
@@ -121,8 +132,9 @@
 <div class="wrap">
   <nav>
     <span class="mark">
-      <svg viewBox="0 0 30 16" aria-hidden="true">
-        <path d="M1 11 C 6 1, 10 1, 15 8 S 24 15, 29 5" fill="none" stroke="#E8C89A" stroke-width="3" stroke-linecap="round"/>
+      <svg viewBox="0 0 68 36" aria-hidden="true" fill="none" stroke-linecap="round">
+        <path d="M3 12 C13 2 23 2 34 12 S55 22 65 12" stroke="#F2B45C" stroke-width="5"/>
+        <path d="M7 28 C16 21 25 21 34 28 S52 35 61 28" stroke="#6FB2CE" stroke-width="3.4"/>
       </svg>
       Sway
     </span>
@@ -137,11 +149,12 @@
     <div>
       <h1>Help that arrives in two seconds.</h1>
       <p>Tap the icon. Before the screen has finished brightening, your phone is already pulsing a slow breathing rhythm you can follow with your eyes shut.</p>
+      <p class="under" style="margin:0 0 26px">Version 1.0.1: a new face drawn from the icon, and nine fixes.</p>
       <a class="cta" href="https://play.google.com/store/apps/details?id=com.mohdshayan.sway">Get it on Google Play</a>
       <p class="under">Free and complete. No account, no subscription, works in airplane mode.</p>
     </div>
     <img class="shot reveal" src="shots/01-session.png" width="1080" height="1920"
-         alt="The session screen: a slow horizon line of water rising and falling, with the words Breathe out, slowly.">
+         alt="The session screen: a warm wave of light riding over cool water under a field of stars, with the words Breathe in.">
   </header>
 </div>
 
@@ -161,7 +174,8 @@
     <h2>A rhythm you can feel, not one you have to watch</h2>
     <p class="sub">Every other breathing app puts a circle on a screen. Sway puts the rhythm in the vibration
       motor, so you can follow it lying in the dark, on a train, or with the phone still in your pocket.
-      Nobody has to see you doing it.</p>
+      Nobody has to see you doing it. When you do look, the screen is one warm wave of light over cool
+      water, rising as you breathe in and settling as you breathe out.</p>
     <div class="beat"><span class="t">Breathe in</span><p class="d">A gathering swell. The vibration rises like a wave coming in, and you rise with it.</p></div>
     <div class="beat"><span class="t">Hold</span><p class="d">Nothing at all. Stillness is the instruction, and it starts at zero seconds because holding your breath can make an attack worse.</p></div>
     <div class="beat"><span class="t">Breathe out</span><p class="d">A long train of pulses that fade and spread apart. The out breath is the longer half, always.</p></div>
@@ -176,9 +190,10 @@
   <div class="strip">
     <figure class="reveal">
       <img class="shot" src="shots/03-grounding.png" width="1080" height="1920"
-           alt="A grounding screen with one instruction in large type: Name 4 things you can feel.">
-      <figcaption>Still stormy: grounding, one instruction per screen, advanced by tapping anywhere. Counting
-        the senses, cold water on the wrists, or slow alternating taps kept in time by the phone.</figcaption>
+           alt="The grounding menu: name what is here, something cold, or left right left, as three large cards.">
+      <figcaption>Still stormy: three ways down. Counting the senses, cold water on the wrists, or slow
+        alternating taps kept in time by the phone. Each one is a single instruction per screen, in type you
+        can read through tears, advanced by tapping anywhere.</figcaption>
     </figure>
     <figure class="reveal">
       <img class="shot" src="shots/04-log.png" width="1080" height="1920"

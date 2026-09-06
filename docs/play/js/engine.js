@@ -26,7 +26,10 @@ const Engine = (() => {
   const canWebVibrate = () =>
     !!navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive);
 
+  /** One gate for every vibration in the app, so the haptics switch silences the motor completely
+      rather than only the breathing rhythm. */
   function fire(ms, amp) {
+    if (!Store.settings().haptics) return;
     try {
       if (N && N.vibrate) N.vibrate(ms, amp);
       else if (canWebVibrate()) navigator.vibrate(ms);
@@ -64,7 +67,7 @@ const Engine = (() => {
   }
 
   /* ---------- the tide underlay, synthesised ---------- */
-  let ctx = null, gain = null, filt = null;
+  let ctx = null, gain = null, filt = null, sleepTimer = null;
   function initAudio() {
     if (ctx) return true;
     const C = window.AudioContext || window.webkitAudioContext;
@@ -93,12 +96,20 @@ const Engine = (() => {
   function audioResume() {
     if (!Store.settings().audio || !audioAllowed()) return;
     if (!initAudio()) return;
+    clearTimeout(sleepTimer);
     if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   }
+  /** Fade out, then hand the audio hardware back: a silent context left running costs battery all
+      night on a phone that was opened once at 3am. */
   function audioStop() {
     if (!ctx) return;
     try { gain.gain.setTargetAtTime(0, ctx.currentTime, 0.15); } catch (e) {}
+    clearTimeout(sleepTimer);
+    sleepTimer = setTimeout(() => {
+      if (ctx && !running && ctx.state === 'running') ctx.suspend().catch(() => {});
+    }, 900);
   }
+  const audioState = () => (ctx ? ctx.state : 'none');
   function audioFollow(level) {
     if (!ctx || !gain || ctx.state !== 'running') return;
     const on = Store.settings().audio && running;
@@ -144,7 +155,7 @@ const Engine = (() => {
   }
 
   function pause() { clearTimeout(cycleTimer); cycleTimer = null; clearHaptics(); audioStop(); }
-  function resume() { if (running && !cycleTimer) cycle(); }
+  function resume() { if (running && !cycleTimer) { cycle(); audioResume(); } }
 
   function level(now) {
     if (!cur) return 0;
@@ -184,12 +195,14 @@ const Engine = (() => {
   function buzz(v, ms) { fire(ms || 40, amp(v == null ? 0.5 : v)); }
 
   return { start, stop, pause, resume, level, phase, elapsed, isRunning, launchMs,
-           audioResume, audioFollow, audioStop, initAudio, tapStart, tapStop, buzz, phasesAt };
+           audioResume, audioFollow, audioStop, audioState, initAudio, tapStart, tapStop, buzz, phasesAt };
 })();
 
-/* The horizon. One continuous slow oscillation and nothing else moves. */
+/* The signature: the launcher icon, alive. A warm breath wave rides over cool water, exactly the two
+   strokes on the icon, and the warm one carries the rhythm. One continuous oscillation, nothing else. */
 const Water = (() => {
   let cv = null, g = null, raf = null, w = 0, h = 0, dpr = 1, t0 = 0;
+  let stars = null, glow = null;                    // painted once per resize, then blitted
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let shown = 0;
 
@@ -198,59 +211,144 @@ const Water = (() => {
     resize();
     window.addEventListener('resize', resize);
   }
+
+  /** A fixed handful of stars, same every launch, so the field is a place rather than noise. */
+  function paintStars() {
+    stars = document.createElement('canvas');
+    stars.width = Math.max(1, Math.round(w * dpr)); stars.height = Math.max(1, Math.round(h * dpr));
+    const s = stars.getContext('2d');
+    s.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let seed = 20260907;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    for (let i = 0; i < 34; i++) {
+      const x = rnd() * w, y = rnd() * h * 0.56;
+      const r = 0.5 + rnd() * 1.0;
+      s.globalAlpha = 0.2 + rnd() * 0.55;
+      s.fillStyle = '#FFF3D9';
+      s.beginPath(); s.arc(x, y, r, 0, Math.PI * 2); s.fill();
+    }
+    s.globalAlpha = 1;
+  }
+
+  /** The amber halo behind the breath, drawn once and moved, because a gradient a frame is not free. */
+  function paintGlow() {
+    const R = Math.max(110, Math.round(w * 0.60));
+    glow = document.createElement('canvas');
+    glow.width = Math.round(R * 2 * dpr); glow.height = Math.round(R * 2 * dpr);
+    const s = glow.getContext('2d');
+    s.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const gr = s.createRadialGradient(R, R, 0, R, R, R);
+    gr.addColorStop(0, 'rgba(255, 209, 138, 0.40)');
+    gr.addColorStop(0.22, 'rgba(240, 164, 74, 0.14)');
+    gr.addColorStop(0.55, 'rgba(226, 132, 48, 0.035)');
+    gr.addColorStop(1, 'rgba(226, 132, 48, 0)');
+    s.fillStyle = gr;
+    s.fillRect(0, 0, R * 2, R * 2);
+    glow.r = R;
+  }
+
   function resize() {
     if (!cv) return;
     dpr = Math.min(3, window.devicePixelRatio || 1);
-    w = cv.clientWidth; h = cv.clientHeight;
+    const nw = cv.clientWidth, nh = cv.clientHeight;
+    if (!nw || !nh) return;
+    w = nw; h = nh;
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    paintStars(); paintGlow();
   }
-  function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+  function css(v, d) { return (getComputedStyle(document.documentElement).getPropertyValue(v) || '').trim() || d; }
+
+  function trace(yAt, step) {
+    g.beginPath();
+    for (let x = 0; x <= w; x += step) { const y = yAt(x); x === 0 ? g.moveTo(x, y) : g.lineTo(x, y); }
+  }
 
   function frame(now) {
     raf = requestAnimationFrame(frame);
     if (!g || !w) return;
     if (!t0) t0 = now;
     const target = Engine.level(now);
-    shown += (target - shown) * 0.22;          // one frame of softening, no more
+    shown += (target - shown) * 0.2;
     Engine.audioFollow(shown);
 
-    const deep = css('--water') || '#12283C';
-    const line = css('--fg') || '#EAF0F4';
-    const glow = css('--accent') || '#E8C89A';
+    const ph = (now - t0) / 1000;
+    const deep = css('--water', '#1A3C63');
+    const abyss = css('--water-deep', '#081527');
+    const warm = css('--accent', '#F2B45C');
 
     g.clearRect(0, 0, w, h);
-    const lo = h * 0.80, hi = h * 0.30;
-    const base = lo + (hi - lo) * shown;
-    const amp1 = reduce ? 0 : 5 + 5 * shown;
-    const amp2 = reduce ? 0 : 3 + 3 * shown;
-    const ph = (now - t0) / 1000;
+    if (stars) g.drawImage(stars, 0, 0, w, h);
 
-    const yAt = x => base
-      + amp1 * Math.sin((x / w) * Math.PI * 2 + ph * 0.55)
-      + amp2 * Math.sin((x / w) * Math.PI * 3.4 - ph * 0.33);
+    // The breath: it gathers high on the inhale and settles onto the water on the exhale.
+    const warmBase = h * 0.645 - (h * 0.352) * shown;
+    const warmAmp = reduce ? 0 : 9 + 15 * shown;
+    const yWarm = x => warmBase
+      + warmAmp * Math.sin((x / w) * Math.PI * 2 + ph * 0.42)
+      + warmAmp * 0.28 * Math.sin((x / w) * Math.PI * 3.6 - ph * 0.29);
 
-    const grad = g.createLinearGradient(0, base - 20, 0, h);
+    // The water: the same gesture, slower and smaller, a beat behind.
+    const seaBase = h * 0.775 - (h * 0.065) * shown;
+    const seaAmp = reduce ? 0 : 4.5 + 4.5 * shown;
+    const ySea = x => seaBase
+      + seaAmp * Math.sin((x / w) * Math.PI * 2 + ph * 0.42 + 0.95)
+      + seaAmp * 0.5 * Math.sin((x / w) * Math.PI * 3.1 - ph * 0.23);
+
+    // 1. the halo behind the breath
+    if (glow) {
+      g.globalCompositeOperation = 'lighter';
+      g.globalAlpha = 0.42 + 0.48 * shown;
+      g.drawImage(glow, w / 2 - glow.r, warmBase - glow.r, glow.r * 2, glow.r * 2);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
+    }
+
+    // 2. the sea body
+    const grad = g.createLinearGradient(0, seaBase - 30, 0, h);
     grad.addColorStop(0, deep);
-    grad.addColorStop(1, css('--water-deep') || '#0A1521');
+    grad.addColorStop(1, abyss);
     g.beginPath();
     g.moveTo(0, h);
-    for (let x = 0; x <= w; x += 4) g.lineTo(x, yAt(x));
+    for (let x = 0; x <= w; x += 4) g.lineTo(x, ySea(x));
     g.lineTo(w, h);
     g.closePath();
     g.fillStyle = grad; g.fill();
 
+    // 3. the breath lying on the water: a sheen that hugs the surface, brightest when the two are close
+    g.save();
     g.beginPath();
-    for (let x = 0; x <= w; x += 3) { const y = yAt(x); x === 0 ? g.moveTo(x, y) : g.lineTo(x, y); }
-    g.lineWidth = 2.5;
-    g.strokeStyle = line;
-    g.globalAlpha = 0.92;
-    g.stroke();
+    g.moveTo(0, h);
+    for (let x = 0; x <= w; x += 6) g.lineTo(x, ySea(x));
+    g.lineTo(w, h); g.closePath(); g.clip();
+    const sheen = g.createLinearGradient(0, seaBase - 12, 0, seaBase + 92);
+    const lit = 0.20 * (1 - shown) + 0.06;
+    sheen.addColorStop(0, 'rgba(255, 205, 130, ' + lit.toFixed(3) + ')');
+    sheen.addColorStop(1, 'rgba(255, 205, 130, 0)');
+    g.globalCompositeOperation = 'lighter';
+    g.fillStyle = sheen;
+    g.fillRect(0, seaBase - 40, w, 150);
+    g.restore();
+    g.globalAlpha = 1;
 
-    g.globalAlpha = 0.10 + 0.28 * shown;
-    g.lineWidth = 9;
-    g.strokeStyle = glow;
-    g.stroke();
+    // 4. the cool line: the water's own edge
+    trace(ySea, 3);
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.globalCompositeOperation = 'lighter';
+    g.lineWidth = 9; g.strokeStyle = css('--cool', '#6FB2CE'); g.globalAlpha = 0.14 + 0.08 * shown; g.stroke();
+    g.globalCompositeOperation = 'source-over';
+    g.lineWidth = 3; g.globalAlpha = 0.9; g.stroke();
+    g.globalAlpha = 1;
+
+    // 5. the warm line, with the same lit top edge the icon has
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    trace(yWarm, 3);
+    g.globalCompositeOperation = 'lighter';
+    g.lineWidth = 26; g.strokeStyle = warm; g.globalAlpha = 0.075 + 0.075 * shown; g.stroke();
+    g.lineWidth = 12; g.globalAlpha = 0.20 + 0.16 * shown; g.stroke();
+    g.globalCompositeOperation = 'source-over';
+    g.lineWidth = 5.5; g.globalAlpha = 1; g.stroke();
+    trace(x => yWarm(x) - 1.5, 3);
+    g.lineWidth = 1.4; g.strokeStyle = '#FFF3DC'; g.globalAlpha = 0.42; g.stroke();
     g.globalAlpha = 1;
   }
 

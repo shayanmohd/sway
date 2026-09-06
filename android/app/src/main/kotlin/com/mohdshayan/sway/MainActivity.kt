@@ -182,8 +182,10 @@ class MainActivity : ComponentActivity() {
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             val d = resources.displayMetrics.density
             // The page pads its own chrome: WebView padding does not move position:fixed content.
-            insetCss = "document.documentElement.style.setProperty('--sat','" + (bars.top / d) + "px');" +
-                       "document.documentElement.style.setProperty('--sab','" + (bars.bottom / d) + "px');"
+            // Insets can arrive before the document exists, so guard before touching it.
+            insetCss = "if(document.documentElement){" +
+                       "document.documentElement.style.setProperty('--sat','" + (bars.top / d) + "px');" +
+                       "document.documentElement.style.setProperty('--sab','" + (bars.bottom / d) + "px');}"
             web.evaluateJavascript(insetCss ?: "", null)
             insets
         }

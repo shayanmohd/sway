@@ -34,8 +34,9 @@ Gradle task on every build.
 
 `docs/` is the GitHub Pages site: landing page, privacy policy, and a playable copy of the app.
 
-`store/` holds the brand spec, the screenshot spec, the generated Play assets and the listing copy. The
-icon and feature graphic are drawn procedurally from `store/brand.json`; nothing is model generated.
+`store/` holds the icon source, the feature graphic source, the screenshot spec, the rendered Play
+assets and the listing copy. `icon.svg` and `feature.html` are hand written and rendered by
+`_shiptools/render-brand.js`; nothing is model generated.
 
 ## Build
 
@@ -49,10 +50,11 @@ Signing reads `android/keystore.properties`, which is not in this repository.
 ## Regenerate the assets
 
 ```sh
-python _shiptools/brand.py store/brand.json --out store --res android/app/src/main/res
+node _shiptools/render-brand.js sway
 python _shiptools/privacy.py store/policy.json --out docs/privacy-policy.html
-python3 -m http.server 8731 --directory web
+python3 -m http.server 8816 --directory web
 node _shiptools/shots.js store/shots.json
+cp store/screenshots/*.png docs/shots/
 rsync -a --delete web/ docs/play/
 ```
 

@@ -10,7 +10,7 @@ Sway: Panic First Aid
 ## Short description (75 / 80)
 One tap to slow breathing you can feel. Offline, private, no account. Ever.
 
-## Full description (3961 / 4000)
+## Full description (3989 / 4000)
 When a panic attack starts, a splash screen is a locked door. So is a login, a mood check in, and the question "what would you like to do today?"
 
 Sway is built for exactly one moment: the bad one. Tap the icon and your phone is already pulsing a slow breathing rhythm against your palm. No account. No network. No menu.
@@ -23,9 +23,9 @@ Other breathing apps put a circle on a screen. Sway puts the rhythm in the vibra
 
 A gathering swell for the in breath, so you rise with the wave. Stillness for the hold, which starts at zero seconds because holding your breath can make an attack worse. A long train of pulses that fade and spread apart for the out breath, which is always the longer half.
 
-You can follow it lying in the dark, in a meeting, or with the phone still in your pocket. Nobody has to see you doing it. If you do look, the screen shows one thing: a horizon line of slow water, rising and falling. No numbers, and no text at all for the first minute.
+You can follow it lying in the dark, in a meeting, or with the phone still in your pocket. Nobody has to see you doing it. If you do look, the screen shows one thing: a warm wave of light over cool water, rising as you breathe in and settling as you breathe out. No numbers, and no text at all for the first minute.
 
-Sessions start a little quicker than comfortable, to meet a racing breath where it already is, then decelerate over three minutes. Calibrate the strength once, because vibration motors vary wildly, and switch on a low tide sound if your phone's motor is weak.
+Sessions start a little quicker than comfortable, to meet a racing breath where it is, then decelerate over three minutes. Calibrate the strength once, because motors vary wildly, and switch on a low tide sound if your phone's motor is weak.
 
 AFTER THE WAVE
 Sway never dumps you back to a menu. It asks one question with two answers.
@@ -77,5 +77,5 @@ Privacy policy: https://shayanmohd.github.io/sway/privacy-policy.html
   no gambling, no user-generated content, no user-to-user communication, no location sharing.
   The app does reference mental health crisis support and self-harm helplines, which should be declared
   honestly if the questionnaire asks.
-- AI-generated assets: none. The icon and feature graphic are drawn procedurally in code from a small
-  JSON spec; the six screenshots are captures of the running app.
+- AI-generated assets: none. The icon is a hand-written SVG and the feature graphic a hand-written HTML
+  page, both rendered by a local script; the six screenshots are captures of the running app.

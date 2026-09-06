@@ -1,7 +1,3 @@
-First release.
+A new look, drawn from the icon. The breathing screen is now a warm wave riding over cool water, lit and moving with your breath, and the same language runs through the shelter, the almanac and the night shelf.
 
-Sway opens straight into a running breathing session. No splash, no login, no question about how you feel. The rhythm lives in the vibration motor, so you can follow it with the phone in your pocket and your eyes shut.
-
-A night shelf holds a trusted contact, offline crisis lines for thirteen regions, and a card you can hand to whoever is next to you.
-
-No account, no ads, no analytics, no internet permission.
+Fixed: switching haptics off now silences every buzz, not only the rhythm. Back leaves a rehearsal or the closing card instead of closing the app. The alternating taps and the tide sound return when you come back.
